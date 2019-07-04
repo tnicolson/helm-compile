@@ -20,13 +20,22 @@
 
 (defvar helm-compile-pre-compilation-hook nil)
 (defvar helm-compile-compilation-hook nil)
-
+(defvar helm-compile-build-machine nil)
+(defvar helm-compile-project-root nil)
 (defvar helm-compile-locate-dominating-file ".git"
     "Locate dominating file before running compilation so that it's executed in
    correct directory (e.g. project root)")
 
-(defun helm-compile--get-default-directory ()
-  (locate-dominating-file (helm-default-directory) helm-compile-locate-dominating-file))
+(defun helm-compile--get-project-directory ()
+  (if helm-compile-project-root
+      helm-compile-project-root
+    (locate-dominating-file (helm-default-directory) helm-compile-locate-dominating-file)))
+
+(defun helm-compile--get-build-directory ()
+  (let ((dir (helm-compile--get-project-directory)))
+    (if helm-compile-build-machine
+        (format "/ssh:%s:%s" helm-compile-build-machine dir)
+      dir)))
 
 (defun helm-compile--do-compile (project command &optional comint)
   (with-temp-buffer
@@ -35,7 +44,7 @@
       (compile command comint))))
 
 (defun helm-compile--compile (command &optional comint)
-  (let ((dir (helm-compile--get-default-directory)))
+  (let ((dir (helm-compile--get-build-directory)))
     (run-hooks 'helm-compile-pre-compilation-hook)
     (let* ((default-directory dir)
            (project (f-base default-directory)))
