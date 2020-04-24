@@ -20,6 +20,7 @@
 
 (defvar helm-compile-pre-compilation-hook nil)
 (defvar helm-compile-compilation-hook nil)
+(defvar helm-compile-prefix nil)
 
 (defvar helm-compile-locate-dominating-file ".git"
     "Locate dominating file before running compilation so that it's executed in
@@ -28,11 +29,16 @@
 (defun helm-compile--get-default-directory ()
   (locate-dominating-file (helm-default-directory) helm-compile-locate-dominating-file))
 
+(defun helm-compile--make-command (command)
+  (if helm-compile-prefix
+      (format "%s %s" helm-compile-prefix command)
+    command))
+
 (defun helm-compile--do-compile (project command &optional comint)
   (with-temp-buffer
     (progn
       (push command compile-history)
-      (compile command comint))))
+      (compile (helm-compile--make-command command) comint))))
 
 (defun helm-compile--compile (command &optional comint)
   (let ((dir (helm-compile--get-default-directory)))
